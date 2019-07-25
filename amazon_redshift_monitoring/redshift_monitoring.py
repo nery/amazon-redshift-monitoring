@@ -240,11 +240,13 @@ def get_config_value(labels, configs):
 
 
 def monitor_cluster(config_sources):
+
+    global debug
+
     aws_region = get_config_value(['AWS_REGION'], config_sources)
 
     set_debug = get_config_value(['DEBUG', 'debug', ], config_sources)
     if set_debug is not None and ((isinstance(set_debug,bool) and set_debug) or set_debug.upper() == 'TRUE'):
-        global debug
         debug = True
 
     kms = boto3.client('kms', region_name=aws_region)
@@ -262,7 +264,6 @@ def monitor_cluster(config_sources):
     interval = get_config_value(['AggregationInterval', 'agg_interval', 'aggregtionInterval'], config_sources)
     set_debug = get_config_value(['debug', 'DEBUG'], config_sources)
     if set_debug is not None:
-        global debug
         debug = set_debug
 
     # we may have been passed the password in the configuration, so extract it if we can

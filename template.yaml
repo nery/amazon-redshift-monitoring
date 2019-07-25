@@ -1,5 +1,9 @@
-AWSTemplateFormatVersion: 2010-09-09
+AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
+Description: >
+  sam-app
+
+  SAM Template for Amazon Redshift Monitoring
 
 Parameters:
   ClusterName:
@@ -50,15 +54,19 @@ Parameters:
       - 10 minutes
 
 
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
 Resources:
-  ScheduledFunction:
-    Type: AWS::Serverless::Function
+
+  AmazonRedshiftMonitoringFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
+      CodeUri: amazon_redshift_monitoring/
       Handler: lambda_function.lambda_handler
       Runtime: python2.7
-      CodeUri:         
-        Bucket: !Sub awslabs-code-${AWS::Region}
-        Key: RedshiftAdvancedMonitoring/redshift-advanced-monitoring-1.5.zip
       MemorySize: 192
       Timeout: 300
       Tags:
@@ -69,6 +77,15 @@ Resources:
           !Ref SecurityGroups
         SubnetIds:
           !Ref SubnetIds
+      Environment:
+        Variables:
+          DbUser: !Ref DbUser
+          EncryptedPassword: !Ref EncryptedPassword
+          ClusterName: !Ref ClusterName
+          HostName: !Ref HostName
+          HostPort: !Ref HostPort
+          DatabaseName: !Ref DatabaseName
+          AggregationInterval: !Ref AggregationInterval
       Events:
         Timer:
           Type: Schedule
@@ -85,6 +102,9 @@ Resources:
                   "DatabaseName":"${DatabaseName}",
                   "AggregationInterval":"${AggregationInterval}"
                 }
+
+
+
   ScheduledServiceIAMRole:
     Type: "AWS::IAM::Role"
     Properties:
@@ -115,3 +135,11 @@ Resources:
                     - "cloudwatch:PutMetricData"                    
                     - "kms:Decrypt"
                   Resource: "*"
+
+Outputs:
+  AmazonRedshiftMonitoringFunction:
+    Description: "Amazon Redshift Monitoring Function ARN"
+    Value: !GetAtt AmazonRedshiftMonitoringFunction.Arn
+  ScheduledServiceIAMRole:
+    Description: "Implicit IAM Role created for Hello World function"
+    Value: !GetAtt ScheduledServiceIAMRole.Arn
